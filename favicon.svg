@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#1e3a5f"/>
+  <!-- Declining amortization curve -->
+  <path d="M6 8 C10 8 15 15 20 20 S26 26 27 26"
+        stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Faint axes -->
+  <line x1="6" y1="8" x2="6" y2="27" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="6" y1="27" x2="27" y2="27" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

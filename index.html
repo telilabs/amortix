@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mortgage amortization calculator with variable rates and extra payments. Model remortgage scenarios, compare interest savings, and export the full schedule.">
+  <title>Multi-Rate Mortgage Calculator with Extra Payments | Amortix</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script
+    defer
+    src="https://cloud.umami.is/script.js"
+    data-website-id="44e8a570-dd8f-4cad-9ad8-8b3659f74c65"
+    data-domains="amortix.pages.dev,://amortix.pages.dev">
+  </script>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <h1>Amortix</h1>
+    <p>Multi-rate amortization with extra payments</p>
+  </div>
+  <div class="header-controls">
+    <button id="copyLinkBtn" class="header-btn">Copy Link</button>
+    <div class="currency-picker">
+      <label for="currencySelect">Currency</label>
+      <select id="currencySelect">
+        <option value="USD|en-US">USD — US Dollar</option>
+        <option value="EUR|de-DE">EUR — Euro</option>
+        <option value="GBP|en-GB">GBP — British Pound</option>
+        <option value="JPY|ja-JP">JPY — Japanese Yen</option>
+        <option value="AUD|en-AU">AUD — Australian Dollar</option>
+        <option value="CAD|en-CA">CAD — Canadian Dollar</option>
+        <option value="CHF|de-CH">CHF — Swiss Franc</option>
+        <option value="INR|en-IN">INR — Indian Rupee</option>
+        <option value="CNY|zh-CN">CNY — Chinese Yuan</option>
+        <option value="BRL|pt-BR">BRL — Brazilian Real</option>
+        <option value="KRW|ko-KR">KRW — Korean Won</option>
+        <option value="SGD|en-SG">SGD — Singapore Dollar</option>
+        <option value="MXN|es-MX">MXN — Mexican Peso</option>
+        <option value="SEK|sv-SE">SEK — Swedish Krona</option>
+        <option value="NOK|nb-NO">NOK — Norwegian Krone</option>
+        <option value="AED|ar-AE">AED — UAE Dirham</option>
+        <option value="ZAR|en-ZA">ZAR — South African Rand</option>
+        <option value="NZD|en-NZ">NZD — New Zealand Dollar</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── LOAN DETAILS ───────────────────────── -->
+  <div class="card">
+    <h2>Loan Details</h2>
+
+    <div class="input-grid">
+      <div class="field" id="fPrice">
+        <label for="price">Property Price</label>
+        <input type="number" id="price" inputmode="decimal" value="400000" min="0" step="1000" />
+        <span class="hint"></span>
+      </div>
+      <div class="field" id="fDeposit">
+        <label for="deposit">Deposit</label>
+        <input type="number" id="deposit" inputmode="decimal" value="80000" min="0" step="1000" />
+        <span class="hint" id="hintDeposit"></span>
+      </div>
+      <div class="field" id="fDerived">
+        <label>Loan Amount</label>
+        <div class="derived-value" id="derivedLoan">—</div>
+        <span class="hint" id="hintLTV"></span>
+      </div>
+      <div class="field">
+        <label for="term">Loan Term (years)</label>
+        <input type="number" id="term" inputmode="numeric" value="25" min="1" max="50" step="1" />
+        <span class="hint"></span>
+      </div>
+      <div class="field">
+        <label for="frequency">Payment Frequency</label>
+        <select id="frequency">
+          <option value="monthly">Monthly</option>
+          <option value="biweekly">Biweekly (26×/yr)</option>
+          <option value="accelerated-biweekly">Accelerated Biweekly</option>
+          <option value="weekly">Weekly (52×/yr)</option>
+        </select>
+        <span class="hint" id="freqHint"></span>
+      </div>
+    </div>
+
+    <hr class="section-sep" />
+
+    <div class="rp-header">
+      <span class="rp-header-label">Rate Schedule</span>
+      <button class="btn-secondary" id="addPeriod">+ Add Period</button>
+    </div>
+    <div class="rp-list" id="ratePeriodsContainer"></div>
+    <div class="rp-footer"><span id="rpTotal" class="rp-total"></span></div>
+
+    <div class="error-msg" id="errorMsg" role="alert" aria-live="polite"></div>
+  </div>
+
+  <!-- ── EXTRA PAYMENTS ─────────────────────── -->
+  <div class="card">
+    <div class="card-header-row">
+      <h2>Extra Payments</h2>
+      <div class="toggle-group" id="extraModeToggle" role="group" aria-label="Extra payment mode">
+        <button class="toggle-btn active" data-emode="reduce-term">Reduce Term</button>
+        <button class="toggle-btn"        data-emode="reduce-payment">Reduce Payment</button>
+      </div>
+    </div>
+
+    <div class="input-grid">
+      <div class="field">
+        <label id="labelExtraPer" for="extraPerPeriod">Extra per monthly payment</label>
+        <input type="number" id="extraPerPeriod" inputmode="decimal" value="0" min="0" step="100" />
+        <span class="hint">Recurring — applied every period</span>
+      </div>
+      <div class="field">
+        <label for="annualLumpSum">Annual lump sum</label>
+        <input type="number" id="annualLumpSum" inputmode="decimal" value="0" min="0" step="100" />
+        <span class="hint">Applied on each loan anniversary</span>
+      </div>
+    </div>
+
+    <hr class="section-sep" />
+
+    <div class="rp-header">
+      <span class="rp-header-label">One-off Lump Sums</span>
+      <button class="btn-secondary" id="addLump">+ Add</button>
+    </div>
+    <div id="oneOffContainer"></div>
+    <div id="oneOffEmpty" style="font-size:0.8rem;color:var(--gray-400);padding:0.375rem 0;">
+      No one-off payments — click "+ Add" to schedule one.
+    </div>
+  </div>
+
+  <!-- ── SUMMARY ────────────────────────────── -->
+  <div class="card" id="resultsSection" style="display:none">
+    <h2>Summary</h2>
+    <div class="summary-grid">
+      <div class="summary-card primary">
+        <span class="s-label" id="sPaymentLabel">Monthly Payment</span>
+        <span class="s-value" id="sMonthly">—</span>
+        <span class="s-sub" id="sPaymentSub">fixed per period</span>
+      </div>
+      <div class="summary-card">
+        <span class="s-label">Total Repaid</span>
+        <span class="s-value" id="sTotal">—</span>
+        <span class="s-sub">over <span id="sTerm">—</span> years</span>
+      </div>
+      <div class="summary-card">
+        <span class="s-label">Total Interest</span>
+        <span class="s-value" id="sInterest">—</span>
+        <span class="s-sub" id="sInterestPct">— of total repaid</span>
+      </div>
+      <div class="summary-card">
+        <span class="s-label">Payoff Date</span>
+        <span class="s-value" id="sPayoff" style="font-size:1.05rem;letter-spacing:-0.02em">—</span>
+        <span class="s-sub" id="sPayoffSub">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SAVINGS vs BASELINE ────────────────── -->
+  <div class="card" id="savingsSection" style="display:none">
+    <h2>Savings vs. No Extra Payments</h2>
+    <div class="summary-grid">
+      <div class="sav-card">
+        <span class="sav-label">Interest Saved</span>
+        <span class="sav-value" id="savInterest">—</span>
+        <span class="sav-sub"  id="savInterestPct">—</span>
+      </div>
+      <div class="sav-card">
+        <span class="sav-label">Time Saved</span>
+        <span class="sav-value" id="savTime">—</span>
+        <span class="sav-sub"  id="savTimeSub">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHARTS ─────────────────────────────── -->
+  <div class="card" id="chartsSection" style="display:none">
+    <h2>Charts</h2>
+    <div class="charts-grid">
+      <div class="chart-col chart-col-full">
+        <p class="chart-title">Remaining Balance</p>
+        <div class="chart-wrap"><canvas id="chartBalanceCanvas"></canvas></div>
+      </div>
+      <div class="chart-col">
+        <p class="chart-title">Cumulative Principal vs Interest</p>
+        <div class="chart-wrap"><canvas id="chartCumulativeCanvas"></canvas></div>
+      </div>
+      <div class="chart-col">
+        <p class="chart-title">Annual Payment Breakdown</p>
+        <div class="chart-wrap"><canvas id="chartBreakdownCanvas"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── AMORTIZATION TABLE ─────────────────── -->
+  <div class="card" id="tableSection" style="display:none">
+    <div class="card-header-row">
+      <h2>Amortization Schedule</h2>
+      <div class="table-actions">
+        <button class="btn-secondary" id="exportCsvBtn">Export CSV</button>
+        <button class="btn-secondary" id="toggleTableBtn">Hide</button>
+      </div>
+    </div>
+    <div class="collapsible-body" id="tableCollapsible">
+      <div class="table-wrapper">
+        <table id="scheduleTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Payment</th>
+              <th class="th-extra">Extra</th>
+              <th>Interest</th>
+              <th>Principal</th>
+              <th>Balance</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-links">
+      <span>Made by <a href="https://github.com/telilabs" target="_blank" rel="noopener noreferrer">TeliLabs</a></span>
+      <span class="footer-sep" aria-hidden="true">·</span>
+      <a href="https://github.com/telilabs/amortix" target="_blank" rel="noopener noreferrer">View source</a>
+      <span class="footer-sep" aria-hidden="true">·</span>
+      <a href="https://www.linkedin.com/in/tarek-elidrissi" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">LinkedIn</a>
+    </div>
+    <p class="footer-disclaimer">For estimation purposes only — not financial advice.</p>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
